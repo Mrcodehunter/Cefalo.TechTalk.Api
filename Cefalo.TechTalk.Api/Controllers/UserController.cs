@@ -1,6 +1,7 @@
 ﻿using Cefalo.TechTalk.Database.Models;
 using Cefalo.TechTalk.Service.Contracts;
 using Cefalo.TechTalk.Service.DTOs;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -26,6 +27,13 @@ namespace Cefalo.TechTalk.Api.Controllers
         public async Task<ActionResult<UserDetailsDto>> GetUserByIdAsync(int id)
         {
             return Ok(await _userService.GetUserByIdAsync(id));
+        }
+
+        [HttpPut("{userName}"), Authorize]
+        public async Task<ActionResult<UserDetailsDto>> UpdateUserAsync(UserUpdateDto userUpdateDto, string userName)
+        {
+            var user = await _userService.UpdateUserAsync(userUpdateDto, userName);
+            return Ok(user); 
         }
         
        
