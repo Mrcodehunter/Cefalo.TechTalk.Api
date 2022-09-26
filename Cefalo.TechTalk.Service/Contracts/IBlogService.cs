@@ -1,4 +1,5 @@
 ﻿using Cefalo.TechTalk.Database.Models;
+using Cefalo.TechTalk.Service.DTOs;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,11 +10,12 @@ namespace Cefalo.TechTalk.Service.Contracts
 {
     public interface IBlogService
     {
-        Task<List<Blog>> GetAllAsync();
-        Task<Blog> CreateBlogAsync(Blog blog);
-        Task<Blog> GetBlogByIdAsync(int id);
-        Task<Blog> GetBlogByTitleAsync(string title);
-        Task<Blog> GetBlogByAuthorAsync(string author);
-        Task<Blog> DeleteBlogByIdAsync(int id);
+        Task<List<BlogDetailsDto>> GetAllAsync();
+        Task<BlogDetailsDto> CreateBlogAsync(BlogPostDto blog);
+        Task<BlogDetailsDto> GetBlogByIdAsync(int id);
+        Task<BlogDetailsDto> GetBlogByTitleAsync(string title);
+        Task<BlogDetailsDto> GetBlogByAuthorAsync(string author);
+        Task<BlogDetailsDto> UpdateBlogByIdAsync(BlogUpdateDto blog,int id);
+        Task<Boolean> DeleteBlogByIdAsync(int id);
     }
 }

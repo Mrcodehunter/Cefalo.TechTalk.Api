@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace Cefalo.TechTalk.Database.Migrations
 {
-    public partial class CreateInitial : Migration
+    public partial class createInitial : Migration
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
@@ -33,7 +33,8 @@ namespace Cefalo.TechTalk.Database.Migrations
                 name: "Blogs",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false),
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
                     AuthorName = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: false),
                     AuthorId = table.Column<int>(type: "int", maxLength: 1000, nullable: false),
                     Title = table.Column<string>(type: "nvarchar(450)", nullable: true),
@@ -45,12 +46,17 @@ namespace Cefalo.TechTalk.Database.Migrations
                 {
                     table.PrimaryKey("PK_Blogs", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_Blogs_Users_Id",
-                        column: x => x.Id,
+                        name: "FK_Blogs_Users_AuthorId",
+                        column: x => x.AuthorId,
                         principalTable: "Users",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Blogs_AuthorId",
+                table: "Blogs",
+                column: "AuthorId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Blogs_Title",

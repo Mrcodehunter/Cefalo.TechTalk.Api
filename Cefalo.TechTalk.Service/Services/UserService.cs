@@ -4,10 +4,15 @@ using Cefalo.TechTalk.Database.Models;
 using Cefalo.TechTalk.Repository.Contracts;
 using Cefalo.TechTalk.Service.Contracts;
 using Cefalo.TechTalk.Service.DTOs;
+using Cefalo.TechTalk.Service.Utils.Contracts;
+using Cefalo.TechTalk.Service.Utils.CustomErrorHandler;
+using Cefalo.TechTalk.Service.Utils.DtoValidators;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -17,46 +22,104 @@ namespace Cefalo.TechTalk.Service.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly IPasswordHandler _passwordHandler;
+        private readonly IJwtHandler _jwtHandler;
+        private readonly BaseValidator<UserDetailsDto> _userDetailsDtoValidator;
+        private readonly BaseValidator<UserUpdateDto> _userUpdateDtoValidator;
 
-        
 
-        public UserService(IUserRepository userRepository, IMapper mapper)
+        public UserService(
+            IUserRepository userRepository,
+            IMapper mapper,
+            IPasswordHandler passwordHandler,
+            IJwtHandler jwtHandler,
+            BaseValidator<UserDetailsDto> userDetailsDtoValidator,
+            BaseValidator<UserUpdateDto> userUpdateDtoValidator
+            )
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _passwordHandler = passwordHandler;
+            _jwtHandler = jwtHandler;
+            _userDetailsDtoValidator = userDetailsDtoValidator;
+            _userUpdateDtoValidator = userUpdateDtoValidator;
         }
 
 
         public async Task<List<UserDetailsDto>> GetAllAsync()
         {
             List<User> users = await _userRepository.GetAllAsync();
+            if (users == null) throw new NotFoundException("No User Found!");
+
             List<UserDetailsDto> userDetails = _mapper.Map<List<UserDetailsDto>>(users);
+            foreach(var user in userDetails) _userDetailsDtoValidator.ValidateDto(user);
+
             return userDetails;
         }
 
         public async Task<UserDetailsDto> GetUserByIdAsync(int id)
         {
             User user = await (_userRepository.GetUserByIdAsync(id));
-            return _mapper.Map<UserDetailsDto>(user);
+            if (user == null) throw new NotFoundException("No user Exists!");
+
+            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
+            _userDetailsDtoValidator.ValidateDto(userDetails);
+
+            return userDetails;
            
         }
+
+        public async Task<UserDetailsDto> UpdateUserAsync(UserUpdateDto user, string userName)
+        {
+            if (!_jwtHandler.HttpContextExist()) throw new UnAuthorizedException("Unauthorized");
+            if (userName != _jwtHandler.GetClaimName()) throw new UnAuthorizedException("Unauthorized");
+
+            _userUpdateDtoValidator.ValidateDto(user);
+
+
+            User user2 = _mapper.Map<User>(user);
+
+            if (user.Password != null) {
+                _passwordHandler.CreatePasswordHash(user.Password, out byte[] passwordHash, out byte[] passwordSalt);
+                user2.PasswordSalt = passwordSalt;
+                user2.PasswordHash = passwordHash;
+                user2.PasswordChangedAt = DateTime.UtcNow;
+                
+            }
+            user2.ModifiedAt = DateTime.UtcNow;
+
+            User updatedUser = await _userRepository.UpdateUserAsync(user2, userName);
+           
+            UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(updatedUser);
+            userDetailsDto.Token = _jwtHandler.CreateToken(updatedUser);
+
+            _userDetailsDtoValidator.ValidateDto(userDetailsDto);
+
+            return userDetailsDto;
+         }
 
 
 
         public async Task<UserDetailsDto> GetUserByNameAsync(string name)
         {
             User user = await (_userRepository.GetUserByNameAsync(name));
-            return _mapper.Map<UserDetailsDto>(user);
+            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
+            _userDetailsDtoValidator.ValidateDto(userDetails);
+            return userDetails;
         }
         public async Task<UserDetailsDto> GetUserByEmailAsync(string email)
         {
            User user = await (_userRepository.GetUserByEmailAsync(email));
-            return _mapper.Map<UserDetailsDto>(user);
+            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
+            _userDetailsDtoValidator.ValidateDto(userDetails);
+            return userDetails;
         }
         public async Task<UserDetailsDto> GetUserByUserNameAsync(string userName)
         {
            User user = await (_userRepository.GetUserByUserNameAsync(userName));
-           return _mapper.Map<UserDetailsDto>(user);
+            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
+            _userDetailsDtoValidator.ValidateDto(userDetails);
+            return userDetails;
         }
     }
 }

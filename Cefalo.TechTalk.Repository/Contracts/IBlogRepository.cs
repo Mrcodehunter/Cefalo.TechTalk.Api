@@ -14,8 +14,8 @@ namespace Cefalo.TechTalk.Repository.Contracts
         Task<Blog> GetBlogByIdAsync(int id);
         Task<Blog> GetBlogByTitleAsync(string title);
         Task<Blog> GetBlogByAuthorAsync(string author);
-        Task<Blog> UpdateBlogAsync(Blog blog); 
-        Task<Blog> DeleteBlogByIdAsync(int id);
+        Task<Blog> UpdateBlogByIdAsync(Blog blog,int id); 
+        Task<Boolean> DeleteBlogAsync(Blog blog);
        
     }
 }

@@ -13,6 +13,7 @@ namespace Cefalo.TechTalk.Service.Contracts
     {
         Task<List<UserDetailsDto>> GetAllAsync();
         Task<UserDetailsDto> GetUserByIdAsync(int id);
+        Task<UserDetailsDto> UpdateUserAsync(UserUpdateDto user,string userName);
         Task<UserDetailsDto> GetUserByNameAsync(string name);
         Task<UserDetailsDto> GetUserByEmailAsync(string email);
         Task<UserDetailsDto> GetUserByUserNameAsync(string userName);

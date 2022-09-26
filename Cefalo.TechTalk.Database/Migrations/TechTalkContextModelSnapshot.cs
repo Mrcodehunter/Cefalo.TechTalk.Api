@@ -25,7 +25,10 @@ namespace Cefalo.TechTalk.Database.Migrations
             modelBuilder.Entity("Cefalo.TechTalk.Database.Models.Blog", b =>
                 {
                     b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"), 1L, 1);
 
                     b.Property<int>("AuthorId")
                         .HasMaxLength(1000)
@@ -51,6 +54,8 @@ namespace Cefalo.TechTalk.Database.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AuthorId");
 
                     b.HasIndex("Title")
                         .IsUnique()
@@ -113,7 +118,7 @@ namespace Cefalo.TechTalk.Database.Migrations
                 {
                     b.HasOne("Cefalo.TechTalk.Database.Models.User", "User")
                         .WithMany("Blogs")
-                        .HasForeignKey("Id")
+                        .HasForeignKey("AuthorId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 

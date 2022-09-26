@@ -42,7 +42,7 @@ namespace Cefalo.TechTalk.Database.Configurations
             builder
                 .HasOne<User>(x => x.User)
                 .WithMany(x => x.Blogs)
-                .HasForeignKey(x => x.Id);
+                .HasForeignKey(x => x.AuthorId);
 
         }
     }
