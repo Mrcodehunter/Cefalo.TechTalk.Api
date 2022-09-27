@@ -1,7 +1,9 @@
 ﻿using Cefalo.TechTalk.Service.Utils.Contracts;
+using Microsoft.AspNetCore.Http;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
@@ -10,6 +12,7 @@ namespace Cefalo.TechTalk.Service.Utils.Services
 {
     public class PasswordHandler : IPasswordHandler
     {
+      
        public void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
         {
             using (var hmac = new HMACSHA512())
@@ -27,5 +30,7 @@ namespace Cefalo.TechTalk.Service.Utils.Services
                 return computedHash.SequenceEqual(passwordHash);
             }
         }
+
+        
     }
 }

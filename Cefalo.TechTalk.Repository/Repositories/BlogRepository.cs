@@ -40,23 +40,22 @@ namespace Cefalo.TechTalk.Repository.Repositories
         public async Task<Blog> GetBlogByAuthorAsync(string author)
         {
             return await (_techTalkContext.Blogs.FirstOrDefaultAsync(x => x.AuthorName == author));
-            //return await (_techTalkContext.Blogs.(x => x.Author == author));
+            
         }
-        public async Task<Blog> UpdateBlogAsync(Blog blog)
+        public async Task<Blog> UpdateBlogByIdAsync(Blog blog,int id)
         {
-            Blog blog1 = await _techTalkContext.Blogs.FirstOrDefaultAsync(x => x.Id == blog.Id);
-            blog1.Title = blog.Title;   
-            blog1.AuthorName = blog.AuthorName; 
+            Blog blog1 = await _techTalkContext.Blogs.FindAsync(id);
+            blog1.Title = blog.Title;
             blog1.Body = blog.Body;
+            blog1.ModifiedAt = DateTime.Now;
             await _techTalkContext.SaveChangesAsync();
             return blog1;
         }
-        public async Task<Blog> DeleteBlogByIdAsync(int id)
+        public async Task<Boolean> DeleteBlogAsync(Blog blog)
         {
-            var blog = await _techTalkContext.Blogs.FindAsync(id);
             _techTalkContext.Blogs.Remove(blog);
             await _techTalkContext.SaveChangesAsync();
-            return null;
+            return true;
         }
     }
 }

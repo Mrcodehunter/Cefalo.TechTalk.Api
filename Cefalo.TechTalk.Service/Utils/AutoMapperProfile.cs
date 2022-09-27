@@ -15,6 +15,11 @@ namespace Cefalo.TechTalk.Service.Utils
         {
             CreateMap<UserSignUpDto, User>();
             CreateMap<User, UserDetailsDto>();
+            CreateMap<UserUpdateDto, User>();
+
+            CreateMap<BlogPostDto, Blog>();
+            CreateMap<Blog, BlogDetailsDto>();
+            CreateMap<BlogUpdateDto, Blog>();
                 
         }
     }

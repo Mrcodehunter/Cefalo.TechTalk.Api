@@ -4,7 +4,10 @@ using Cefalo.TechTalk.Repository.Contracts;
 using Cefalo.TechTalk.Service.Contracts;
 using Cefalo.TechTalk.Service.DTOs;
 using Cefalo.TechTalk.Service.Utils.Contracts;
+using Cefalo.TechTalk.Service.Utils.CustomErrorHandler;
+using Cefalo.TechTalk.Service.Utils.DtoValidators;
 using Microsoft.AspNetCore.Http;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using System;
@@ -26,16 +29,31 @@ namespace Cefalo.TechTalk.Service.Services
       
         private readonly IPasswordHandler _passwordHandler;
         private readonly IJwtHandler _jwtHandler;
-        private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly BaseValidator<UserSignInDto> _userSignInDtoValidator;
+        private readonly BaseValidator<UserSignUpDto> _userSignUpDtoValidator;
+        private readonly BaseValidator<UserDetailsDto> _userDetailsDtoValidator;
 
-        public AuthService(IUserRepository userRepository,IMapper mapper,  IPasswordHandler passwordHandler, IJwtHandler jwtHandler, IHttpContextAccessor httpContextAccessor)
+
+        // private readonly BaseValidator<UserSignUpDto> _userSignUpDtoValidator;
+
+        public AuthService(
+            IUserRepository userRepository,
+            IMapper mapper, 
+            IPasswordHandler passwordHandler,
+            IJwtHandler jwtHandler,
+            BaseValidator<UserSignInDto> userSignInDtoValidator,
+            BaseValidator<UserSignUpDto> userSignUpDtoValidator,
+            BaseValidator<UserDetailsDto> userDetailsDtoValidator
+            )
+
         {
             _userRepository = userRepository;
             _mapper = mapper;
-           
             _passwordHandler = passwordHandler;
             _jwtHandler = jwtHandler;
-            _httpContextAccessor = httpContextAccessor;
+            _userSignInDtoValidator = userSignInDtoValidator;
+            _userDetailsDtoValidator = userDetailsDtoValidator;
+            _userSignUpDtoValidator = userSignUpDtoValidator;
         }
 
        
@@ -44,12 +62,16 @@ namespace Cefalo.TechTalk.Service.Services
 
         public async Task<UserDetailsDto> SignUpAsync(UserSignUpDto userSignUpDto)
         {
-            _passwordHandler.CreatePasswordHash(userSignUpDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
 
+            _userSignUpDtoValidator.ValidateDto(userSignUpDto);
+
+            _passwordHandler.CreatePasswordHash(userSignUpDto.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            
             User user = _mapper.Map<User>(userSignUpDto);
-            user.CreatedAt = DateTime.Now;
-            user.ModifiedAt = DateTime.Now;
-            user.PasswordChangedAt = DateTime.Now;
+
+            user.CreatedAt = DateTime.UtcNow;
+            user.ModifiedAt = DateTime.UtcNow;
+            user.PasswordChangedAt = DateTime.UtcNow;
             user.PasswordHash = passwordHash;
             user.PasswordSalt = passwordSalt;
             
@@ -58,22 +80,27 @@ namespace Cefalo.TechTalk.Service.Services
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(userResponse);
             userDetailsDto.Token = _jwtHandler.CreateToken(user);
 
+            _userDetailsDtoValidator.ValidateDto(userDetailsDto);
+
             return userDetailsDto;
 
         }
       
         public async Task<UserDetailsDto> SignInAsync(UserSignInDto userSignInDto)
         {
+           _userSignInDtoValidator.ValidateDto(userSignInDto);
+
             User user = await _userRepository.GetUserByUserNameAsync(userSignInDto.UserName);
             if (_passwordHandler.VerifyPasswordHash(userSignInDto.Password, user.PasswordHash, user.PasswordSalt))
             {
                 UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(user);
                 userDetailsDto.Token = _jwtHandler.CreateToken(user);
 
+                _userDetailsDtoValidator.ValidateDto(userDetailsDto);
                 return userDetailsDto;
             }
 
-            return new UserDetailsDto();
+            throw new BadRequestException("Username or password is incorrect");
         }
 
        

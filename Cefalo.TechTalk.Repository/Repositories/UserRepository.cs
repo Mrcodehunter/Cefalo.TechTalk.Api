@@ -38,11 +38,26 @@ namespace Cefalo.TechTalk.Repository.Repositories
             return await _techTalkContext.Users.FindAsync(id);
         }
 
-        /*public async Task<User> UpdateUserAsync(User user)
+        public async Task<User> UpdateUserAsync(User user, string userName)
         {
+            User user2 = await _techTalkContext.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+            user2.Name = user.Name;
+            user2.UserName = user.UserName;
+            user2.Email = user.Email;
+            if(user.PasswordChangedAt != null)
+            {
+                user2.PasswordHash = user.PasswordHash;
+                user2.PasswordSalt = user.PasswordSalt;
+                user2.PasswordChangedAt = user.PasswordChangedAt;
+            }
+            user2.ModifiedAt = user.ModifiedAt;
+            
 
+            await _techTalkContext.SaveChangesAsync();
+
+            return user2;
         }
-*/
+
        
 
 
