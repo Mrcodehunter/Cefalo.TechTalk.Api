@@ -15,7 +15,7 @@ namespace Cefalo.TechTalk.Service.Utils.DtoValidators
             RuleFor(blog => blog.Title)
                 .NotEmpty()
                 .WithMessage("Blog Title Is Required To Post A Blog.");
-            RuleFor(blog => blog.Title)
+            RuleFor(blog => blog.Body)
                 .NotEmpty()
                 .WithMessage("Blog Body Is Required To Post A Blog.");
         }
