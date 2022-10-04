@@ -13,6 +13,8 @@ namespace Cefalo.TechTalk.Service.Contracts
     {
         Task<UserDetailsDto> SignUpAsync(UserSignUpDto userSignUpDto);
         Task<UserDetailsDto> SignInAsync(UserSignInDto userSignInDto);
+        Task<UserDetailsDto> VerifyTokenAsync();
+        Task<string> Logout();
         //Task<string> SignOutAsync();
     }
 }

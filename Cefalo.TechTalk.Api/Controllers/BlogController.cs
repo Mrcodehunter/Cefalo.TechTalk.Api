@@ -2,6 +2,7 @@
 using Cefalo.TechTalk.Service.Contracts;
 using Cefalo.TechTalk.Service.DTOs;
 using Cefalo.TechTalk.Service.Services;
+using Cefalo.TechTalk.Service.Utils.Wrappers;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -20,9 +21,9 @@ namespace Cefalo.TechTalk.Api.Controllers
         }
 
         [HttpGet]
-        public async Task<ActionResult<BlogDetailsDto>> GetAllAsync()
+        public async Task<ActionResult<IEnumerable<BlogDetailsDto>>> GetAllAsync([FromQuery] PaginationFilter filter)
         {
-            return Ok(await _blogService.GetAllAsync());
+            return Ok(await _blogService.GetAllAsync(filter));
         }
 
         [HttpGet("{id}")]
@@ -49,6 +50,12 @@ namespace Cefalo.TechTalk.Api.Controllers
         {
             await _blogService.DeleteBlogByIdAsync(id);
             return Ok();
+        }
+
+        [HttpGet("author/{username}")]
+        public async Task<ActionResult<IEnumerable<BlogDetailsDto>>> GetBlogsOfAuthor(string username,[FromQuery] PaginationFilter filter)
+        {
+            return Ok(await _blogService.GetBlogsOfAuthorAsync(username,filter) );
         }
     }
 }

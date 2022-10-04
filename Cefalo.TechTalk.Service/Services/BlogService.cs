@@ -8,7 +8,12 @@ using Cefalo.TechTalk.Service.DTOs;
 using Cefalo.TechTalk.Service.Utils.Contracts;
 using Cefalo.TechTalk.Service.Utils.CustomErrorHandler;
 using Cefalo.TechTalk.Service.Utils.DtoValidators;
+using Cefalo.TechTalk.Service.Utils.Services;
+using Cefalo.TechTalk.Service.Utils.Wrappers;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using NLog.LayoutRenderers;
+using Org.BouncyCastle.Asn1.Ocsp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,6 +27,8 @@ namespace Cefalo.TechTalk.Service.Services
         private readonly IBlogRepository _blogRepository;
         private readonly IMapper _mapper;
         private readonly IJwtHandler _jwtHandler;
+        private readonly IUriService _uriService;
+        private readonly IHttpContextAccessor _httpContextAccessor;
         private readonly BaseValidator<BlogDetailsDto> _blogDetailsDtoValidator;
         private readonly BaseValidator<BlogPostDto> _blogPostDtoValidator;
         private readonly BaseValidator<BlogUpdateDto> _blogUpdateDtoValidator;
@@ -30,6 +37,8 @@ namespace Cefalo.TechTalk.Service.Services
             IBlogRepository blogRepository,
             IMapper mapper,
             IJwtHandler jwtHandler,
+            IUriService uriService,
+            IHttpContextAccessor httpContextAccessor,
             BaseValidator<BlogDetailsDto> blogDetailsDtoValidator,
             BaseValidator<BlogPostDto> blogPostDtoValidator,
             BaseValidator<BlogUpdateDto> blogUpdateDtoValidator
@@ -38,6 +47,8 @@ namespace Cefalo.TechTalk.Service.Services
             _blogRepository = blogRepository;
             _mapper = mapper;
             _jwtHandler = jwtHandler;
+            _uriService = uriService;
+            _httpContextAccessor = httpContextAccessor;
             _blogDetailsDtoValidator = blogDetailsDtoValidator;
             _blogUpdateDtoValidator = blogUpdateDtoValidator;
             _blogPostDtoValidator = blogPostDtoValidator;
@@ -50,24 +61,27 @@ namespace Cefalo.TechTalk.Service.Services
             Blog blog1 = _mapper.Map<Blog>(blog);
             blog1.AuthorName = _jwtHandler.GetClaimName();
             blog1.AuthorId = Convert.ToInt32(_jwtHandler.GetClaimId());
-            blog1.CreatedAt = DateTime.UtcNow;
-            blog1.ModifiedAt = DateTime.UtcNow;
+            blog1.CreatedAt = DateTime.UtcNow.AddMinutes(-1) ;
+            blog1.ModifiedAt = DateTime.UtcNow.AddMinutes(-1);
            
             Blog blog2 = await _blogRepository.CreateBlogAsync(blog1);
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog2);
 
-            _blogDetailsDtoValidator.ValidateDto(blogDetails);
+            
             return blogDetails;
         }
-        public async Task<List<BlogDetailsDto>> GetAllAsync()
+        public async Task<PagedResponse<List<BlogDetailsDto>>> GetAllAsync(PaginationFilter filter)
         {
-            List<Blog> blogs = await _blogRepository.GetAllAsync();
+            var route = _httpContextAccessor.HttpContext.Request.Path.Value;
+            var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
+
+            List<Blog> blogs = await _blogRepository.GetAllAsync(validFilter.PageNumber, validFilter.PageSize);
             if (blogs == null) throw new NotFoundException("No Story Found!");
             List<BlogDetailsDto> blogDetails = _mapper.Map<List<BlogDetailsDto>>(blogs);
+            var totalRecords = await _blogRepository.CountAsync();
 
-            foreach (var blog in blogDetails) _blogDetailsDtoValidator.ValidateDto(blog);
-
-            return blogDetails;
+            var pagedReponse = PaginationHandler.CreatePagedReponse<BlogDetailsDto>(blogDetails, validFilter, totalRecords, _uriService, route);
+            return pagedReponse;
         }
         public async Task<BlogDetailsDto> GetBlogByIdAsync(int id)
         {
@@ -75,7 +89,7 @@ namespace Cefalo.TechTalk.Service.Services
             if (blog == null) throw new NotFoundException("No Story Found!");
 
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog);
-            _blogDetailsDtoValidator.ValidateDto(blogDetails);
+            
 
             return blogDetails;
         }
@@ -89,15 +103,20 @@ namespace Cefalo.TechTalk.Service.Services
 
             return blogDetails;
         }
-        public async Task<BlogDetailsDto> GetBlogByAuthorAsync(string author)
+        public async Task<PagedResponse<List<BlogDetailsDto>>> GetBlogsOfAuthorAsync(string username, PaginationFilter filter)
         {
-            var blog = await _blogRepository.GetBlogByAuthorAsync(author);
-            if (blog == null) throw new NotFoundException("No Story Found!");
+            var route = _httpContextAccessor.HttpContext.Request.Path.Value;
+            var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
 
-            BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog);
-            _blogDetailsDtoValidator.ValidateDto(blogDetails);
+            List<Blog> blogs = await _blogRepository.GetBlogsOfAuthorAsync(username,  validFilter.PageNumber, validFilter.PageSize);
+            
+            if (blogs == null) throw new NotFoundException("No Story Found!");
+            List<BlogDetailsDto> blogDetails = _mapper.Map<List<BlogDetailsDto>>(blogs);
+            var totalRecords = await _blogRepository.CountBlogsOfUserAsync(username);
 
-            return blogDetails;
+            var pagedReponse = PaginationHandler.CreatePagedReponse<BlogDetailsDto>(blogDetails, validFilter, totalRecords, _uriService, route);
+            return pagedReponse;
+
         }
 
         public async Task<BlogDetailsDto> UpdateBlogByIdAsync(BlogUpdateDto blog,int id)
@@ -117,7 +136,7 @@ namespace Cefalo.TechTalk.Service.Services
             Blog updatedBlog = await _blogRepository.UpdateBlogByIdAsync(blog2, id);
 
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(updatedBlog);
-            _blogDetailsDtoValidator.ValidateDto(blogDetails);
+            
 
             return blogDetails;
         }

@@ -34,5 +34,6 @@ namespace Cefalo.TechTalk.Service.Utils.DtoValidators
                 .LessThanOrEqualTo(DateTime.UtcNow)
                 .WithMessage("Story Last Modification Date Must Be Less or Equal Present Date.");
         }
+
     }
 }

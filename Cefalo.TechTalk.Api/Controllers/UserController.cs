@@ -29,14 +29,20 @@ namespace Cefalo.TechTalk.Api.Controllers
             return Ok(await _userService.GetUserByIdAsync(id));
         }
 
-        [HttpPut("{userName}"), Authorize]
-        public async Task<ActionResult<UserDetailsDto>> UpdateUserAsync(UserUpdateDto userUpdateDto, string userName)
+        [HttpPut("{id}"), Authorize]
+        public async Task<ActionResult<UserDetailsDto>> UpdateUserAsync(UserUpdateDto userUpdateDto, int id)
         {
-            var user = await _userService.UpdateUserAsync(userUpdateDto, userName);
+            var user = await _userService.UpdateUserByIdAsync(userUpdateDto, id);
             return Ok(user); 
         }
-        
-       
+
+        [HttpGet("username/{userName}")]
+        public async Task<ActionResult<UserDetailsDto>> GetUserByUserNameAsync(string userName)
+        {
+            return Ok(await _userService.GetUserByUserNameAsync(userName));
+        }
+
+
 
     }
 }

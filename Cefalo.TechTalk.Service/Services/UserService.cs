@@ -69,10 +69,10 @@ namespace Cefalo.TechTalk.Service.Services
            
         }
 
-        public async Task<UserDetailsDto> UpdateUserAsync(UserUpdateDto user, string userName)
+        public async Task<UserDetailsDto> UpdateUserByIdAsync(UserUpdateDto user, int id)
         {
             if (!_jwtHandler.HttpContextExist()) throw new UnAuthorizedException("Unauthorized");
-            if (userName != _jwtHandler.GetClaimName()) throw new UnAuthorizedException("Unauthorized");
+            if (id.ToString() != _jwtHandler.GetClaimId() ) throw new UnAuthorizedException("Unauthorized");
 
             _userUpdateDtoValidator.ValidateDto(user);
 
@@ -88,7 +88,7 @@ namespace Cefalo.TechTalk.Service.Services
             }
             user2.ModifiedAt = DateTime.UtcNow;
 
-            User updatedUser = await _userRepository.UpdateUserAsync(user2, userName);
+            User updatedUser = await _userRepository.UpdateUserByIdAsync(user2,id);
            
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(updatedUser);
             userDetailsDto.Token = _jwtHandler.CreateToken(updatedUser);

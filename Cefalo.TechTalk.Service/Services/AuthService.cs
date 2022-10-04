@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using NPOI.OpenXmlFormats.Dml;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -26,9 +27,11 @@ namespace Cefalo.TechTalk.Service.Services
     {
         private readonly IUserRepository _userRepository;
         private readonly IMapper _mapper;
+        private readonly ILoggerManager _loggerManager;
       
         private readonly IPasswordHandler _passwordHandler;
         private readonly IJwtHandler _jwtHandler;
+        private readonly ICookieHandler _cookieHandler;
         private readonly BaseValidator<UserSignInDto> _userSignInDtoValidator;
         private readonly BaseValidator<UserSignUpDto> _userSignUpDtoValidator;
         private readonly BaseValidator<UserDetailsDto> _userDetailsDtoValidator;
@@ -38,9 +41,11 @@ namespace Cefalo.TechTalk.Service.Services
 
         public AuthService(
             IUserRepository userRepository,
-            IMapper mapper, 
+            IMapper mapper,
+            ILoggerManager loggerManager,
             IPasswordHandler passwordHandler,
             IJwtHandler jwtHandler,
+            ICookieHandler cookieHandler,
             BaseValidator<UserSignInDto> userSignInDtoValidator,
             BaseValidator<UserSignUpDto> userSignUpDtoValidator,
             BaseValidator<UserDetailsDto> userDetailsDtoValidator
@@ -49,8 +54,10 @@ namespace Cefalo.TechTalk.Service.Services
         {
             _userRepository = userRepository;
             _mapper = mapper;
+            _loggerManager = loggerManager;
             _passwordHandler = passwordHandler;
             _jwtHandler = jwtHandler;
+            _cookieHandler = cookieHandler;
             _userSignInDtoValidator = userSignInDtoValidator;
             _userDetailsDtoValidator = userDetailsDtoValidator;
             _userSignUpDtoValidator = userSignUpDtoValidator;
@@ -80,6 +87,8 @@ namespace Cefalo.TechTalk.Service.Services
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(userResponse);
             userDetailsDto.Token = _jwtHandler.CreateToken(user);
 
+            _cookieHandler.Set("Token", userDetailsDto.Token);
+
             _userDetailsDtoValidator.ValidateDto(userDetailsDto);
 
             return userDetailsDto;
@@ -97,12 +106,34 @@ namespace Cefalo.TechTalk.Service.Services
                 userDetailsDto.Token = _jwtHandler.CreateToken(user);
 
                 _userDetailsDtoValidator.ValidateDto(userDetailsDto);
+                _cookieHandler.Set("Token", userDetailsDto.Token);
+
                 return userDetailsDto;
             }
 
             throw new BadRequestException("Username or password is incorrect");
         }
 
-       
+        public async Task<UserDetailsDto> VerifyTokenAsync()
+        {
+
+            if (!_jwtHandler.HttpContextExist()) throw new BadRequestException("No Token Provided");
+
+            string userName = _jwtHandler.GetClaimName();
+            User user = await _userRepository.GetUserByUserNameAsync(userName);
+            //_cookieHandler.Set("Token", _cookieHandler.Get("Token"));
+            UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(user); 
+            _userDetailsDtoValidator.ValidateDto(userDetailsDto);
+            return userDetailsDto;
+        }
+
+        public Task<string> Logout()
+        {
+            _cookieHandler.Remove("Token");
+            return null;
+        }
+
+
+
     }
 }
