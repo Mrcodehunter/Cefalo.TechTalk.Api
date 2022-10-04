@@ -24,9 +24,12 @@ namespace Cefalo.TechTalk.Repository.Repositories
             await _techTalkContext.SaveChangesAsync();
             return blog;
         }
-        public async Task<List<Blog>> GetAllAsync()
+        public async Task<List<Blog>> GetAllAsync(int pageNumber, int pageSize)
         {
-            return await _techTalkContext.Blogs.ToListAsync();
+            return await _techTalkContext.Blogs
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
         }
 
         public async Task<Blog> GetBlogByIdAsync(int id)
@@ -37,9 +40,13 @@ namespace Cefalo.TechTalk.Repository.Repositories
         {
             return await (_techTalkContext.Blogs.FirstOrDefaultAsync(x => x.Title == title));
         }
-        public async Task<Blog> GetBlogByAuthorAsync(string author)
+        public async Task<List<Blog>> GetBlogsOfAuthorAsync(string username, int pageNumber, int pageSize)
         {
-            return await (_techTalkContext.Blogs.FirstOrDefaultAsync(x => x.AuthorName == author));
+            var blogs = await (_techTalkContext.Blogs.Where(x => x.AuthorName == username)
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync());
+            return blogs;
             
         }
         public async Task<Blog> UpdateBlogByIdAsync(Blog blog,int id)
@@ -56,6 +63,16 @@ namespace Cefalo.TechTalk.Repository.Repositories
             _techTalkContext.Blogs.Remove(blog);
             await _techTalkContext.SaveChangesAsync();
             return true;
+        }
+
+        public async Task<int> CountAsync()
+        {
+            return await _techTalkContext.Blogs.CountAsync();
+        }
+
+        public async Task<int> CountBlogsOfUserAsync(string username)
+        {
+            return await _techTalkContext.Blogs.Where(x => x.AuthorName == username).CountAsync();
         }
     }
 }

@@ -32,9 +32,9 @@ namespace Cefalo.TechTalk.Service.Utils.CustomFormatters.OutputFormatters
             var response = context.HttpContext.Response;
             var buffer = new StringBuilder();
 
-            if(context.Object is IEnumerable<BlogDetailsDto>)
+            if(context.Object is IEnumerable<BlogDetailsDto> blogs )
             {
-                IEnumerable<BlogDetailsDto> blogs = (IEnumerable<BlogDetailsDto>)context.Object;
+                //IEnumerable<BlogDetailsDto> blogs = (IEnumerable<BlogDetailsDto>)context.Object;
                 foreach( BlogDetailsDto blog in blogs )
                     ConvertToCsv(buffer, blog);
             }

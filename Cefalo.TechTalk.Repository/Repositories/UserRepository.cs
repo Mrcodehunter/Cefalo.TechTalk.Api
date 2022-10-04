@@ -38,9 +38,9 @@ namespace Cefalo.TechTalk.Repository.Repositories
             return await _techTalkContext.Users.FindAsync(id);
         }
 
-        public async Task<User> UpdateUserAsync(User user, string userName)
+        public async Task<User> UpdateUserByIdAsync(User user, int id)
         {
-            User user2 = await _techTalkContext.Users.FirstOrDefaultAsync(x => x.UserName == userName);
+            User user2 = await _techTalkContext.Users.FindAsync(id);
             user2.Name = user.Name;
             user2.UserName = user.UserName;
             user2.Email = user.Email;

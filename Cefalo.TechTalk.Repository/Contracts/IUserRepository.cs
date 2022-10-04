@@ -16,7 +16,7 @@ namespace Cefalo.TechTalk.Repository.Contracts
         Task<User> CreateUserAsync(User user);
         Task<List<User>> GetAllAsync();
         Task<User> GetUserByIdAsync(int id);
-        Task<User> UpdateUserAsync(User user, string userName);
+        Task<User> UpdateUserByIdAsync(User user, int id);
 
 
         Task<User> GetUserByNameAsync(string name);
