@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using AutoMapper.Configuration.Conventions;
 using Cefalo.TechTalk.Database.Models;
 using Cefalo.TechTalk.Repository.Contracts;
 using Cefalo.TechTalk.Service.DTOs;
@@ -33,8 +34,22 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
                ex = e;
            }*/
 
+        private static bool CheckObjectEquality<T1, T2>(T1 obj1, T2 obj2)
+        {
+            try
+            {
+                obj1.Should().BeOfType<T2>();
+                obj1.Should().BeEquivalentTo(obj2);
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
         //public async Task<List<UserDetailsDto>> GetAllAsync();
-        
+
         [Fact]
         public async void GetAllAsync_ForEmptyUserList_ReturnsEmptyUserList()
         {
@@ -47,6 +62,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
 
@@ -55,7 +71,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetAllAsync()).Returns(new List<User>());
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
 
 
 
@@ -81,6 +97,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = (new TestUserData()).GetAllUsers();
@@ -89,7 +106,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetAllAsync()).Returns(testUserData);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
 
             
 
@@ -116,11 +133,12 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake< IUserRepository > ();
             var _passwordHandlerStub = A.Fake< IPasswordHandler > ();
             var _jwtHandlerStub = A.Fake< IJwtHandler > ();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake< BaseValidator < UserUpdateDto >> ();
 
             A.CallTo(() => _userRepositoryStub.GetUserByIdAsync(1)).Returns((User)null);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedException = new NotFoundException("No user Exists With This Id.");
 
             // Act
@@ -146,6 +164,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
             
 
@@ -153,7 +172,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetUserByIdAsync(0)).Returns(testUserData.GetUser(0));
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
 
             var expectedUser = _mapperStub.Map<UserDetailsDto>(testUserData.GetUser(0));
 
@@ -185,19 +204,23 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = new TestUserData();
             var userUpdateDto = testUserData.GetUserUpdateDto();
-
-            var expectedException = new UnAuthorizedException("Unauthorized");
             A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(false);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
-            
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
+
+            var expectedException = new UnAuthorizedException("Unauthorized");
+
             //Act
+
             var actualException = await Record.ExceptionAsync(() => _userService.UpdateUserByIdAsync(userUpdateDto,1));
+
             //Assert
+
             Assert.NotNull(actualException);
             Assert.IsType<UnAuthorizedException>(actualException);
             Assert.Equal(expectedException.Message, actualException.Message);
@@ -219,21 +242,25 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = new TestUserData();
             var userUpdateDto = testUserData.GetUserUpdateDto();
 
-            var expectedException = new UnAuthorizedException("Unauthorized");
-
             A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(true);
             A.CallTo(() => _jwtHandlerStub.GetClaimId()).Returns((10).ToString());
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
-            
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
+
+            var expectedException = new UnAuthorizedException("Unauthorized");
+
             //Act
+
             var actualException = await Record.ExceptionAsync(() => _userService.UpdateUserByIdAsync(userUpdateDto, 1));
+
             //Assert
+
             Assert.NotNull(actualException);
             Assert.IsType<UnAuthorizedException>(actualException);
             Assert.Equal(expectedException.Message, actualException.Message);
@@ -241,99 +268,71 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             A.CallTo(() => _jwtHandlerStub.HttpContextExist()).MustHaveHappenedOnceExactly();
             A.CallTo(() => _jwtHandlerStub.GetClaimId()).MustHaveHappenedOnceExactly();
         }
-        
-        /*
-        [Fact]
-        public async void UpdateUSerByIdAsync_WithInvalidUserUpdateDto_ReturnsBadRequestException()
+
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async void UpdateUSerByIdAsync_WithValidUserUpdateDtoAndValidHttpContext_ReturnsUpdatedUserDetailsDto(int id)
         {
             //Arrange
             var config = new MapperConfiguration(cfg =>
-                cfg.CreateMap<User, UserDetailsDto>()
+               {
+                   cfg.CreateMap<User, UserDetailsDto>();
+                   cfg.CreateMap<UserUpdateDto, User>();
+               }
             );
             var _mapperStub = new Mapper(config);
 
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
-            var _userUpdateDtoValidatorStub = new BaseValidator<UserUpdateDto>() ;
-
-            var testUserData = new TestUserData();
-            var userUpdateDto = testUserData.GetUserUpdateDto();
-            userUpdateDto.Name = null;
-
-            var expectedException = new BadRequestException();
-
-            A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(true);
-            A.CallTo(() => _jwtHandlerStub.GetClaimId()).Returns((1).ToString());
-           
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
-            
-            
-            //Act
-            var actualException = await Record.ExceptionAsync(() => _userService.UpdateUserByIdAsync(userUpdateDto, 1));
-            //Assert
-            Assert.NotNull(actualException);
-            Assert.IsType<BadRequestException>(actualException);
-            
-
-        }
-        */
-
-        [Fact]
-        public async void UpdateUSerByIdAsync_WithValidUserUpdateDtoAndValidHttpContext_ReturnsUpdatedUserDetailsDto()
-        {
-            //Arrange
-            var _userRepositoryStub = A.Fake<IUserRepository>();
-            var _mapperStub = A.Fake<IMapper>();
-            var _passwordHandlerStub = A.Fake<IPasswordHandler>();
-            var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
-            var testUserData = new TestUserData();
+            var testUserDataObject = new TestUserData();
             
-            var userUpdateDto = testUserData.GetUserUpdateDto();
+            var userUpdateDto = testUserDataObject.GetUserUpdateDto();
 
-            User user = testUserData.GetUser(1);
+            User user = testUserDataObject.GetUser(id);
+            User updateableDto = testUserDataObject.UpdateableUser(id);
 
+            A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(true);
 
-            var expectedUpdatedUser = testUserData.CreateUserDetailsDtoObject(1);
+            A.CallTo(() => _jwtHandlerStub.GetClaimId()).Returns((id).ToString());
+
+            A.CallTo(() => _dateTimeHandlerStub.GetDateTimeInUtcNow()).Returns(testUserDataObject.GetDateTime());
+
+            A.CallTo(() => _userRepositoryStub
+                           .UpdateUserByIdAsync(A<User>.That.Matches(us => CheckObjectEquality(us, updateableDto)),id)).Returns(user);
+
+            A.CallTo(() => _jwtHandlerStub
+                           .CreateToken(A<User>.That.Matches(us => CheckObjectEquality(us, user)))).Returns("A-New-Token");
+            
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
+
+            var expectedUpdatedUser = testUserDataObject.CreateUserDetailsDtoObject(id);
             expectedUpdatedUser.Token = "A-New-Token";
 
 
-            A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(true);
-
-            A.CallTo(() => _jwtHandlerStub.GetClaimId()).Returns((1).ToString());
-
-            A.CallTo(() => _mapperStub.Map<User>(userUpdateDto)).Returns(user);
-
-            A.CallTo(() => _userRepositoryStub.UpdateUserByIdAsync(user, 1)).Returns(user);
-
-            A.CallTo(() => _mapperStub.Map<UserDetailsDto>(user)).Returns(testUserData.CreateUserDetailsDtoObject(1));
-
-            A.CallTo(() => _jwtHandlerStub.CreateToken(user)).Returns("A-New-Token");
-            
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
-
-            
-           
-
             //Act
-            var actualUpdatedUser = await  _userService.UpdateUserByIdAsync(userUpdateDto, 1);
+
+            var actualUpdatedUser = await  _userService.UpdateUserByIdAsync(userUpdateDto, id);
+
             //Assert
+
             Assert.NotNull(actualUpdatedUser);
+            Assert.IsType<UserDetailsDto>(actualUpdatedUser);
             actualUpdatedUser.Should().BeEquivalentTo(expectedUpdatedUser);
 
             A.CallTo(() => _jwtHandlerStub.HttpContextExist()).MustHaveHappenedOnceExactly();
 
             A.CallTo(() => _jwtHandlerStub.GetClaimId()).MustHaveHappenedOnceExactly();
 
-            A.CallTo(() => _mapperStub.Map<User>(userUpdateDto)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => _dateTimeHandlerStub.GetDateTimeInUtcNow()).MustHaveHappenedOnceExactly();
 
-            A.CallTo(() => _userRepositoryStub.UpdateUserByIdAsync(user, 1)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => _userRepositoryStub.UpdateUserByIdAsync(A<User>.That.Matches(us => CheckObjectEquality(us, updateableDto)), id)).MustHaveHappenedOnceExactly();
 
-            A.CallTo(() => _mapperStub.Map<UserDetailsDto>(user)).MustHaveHappenedOnceExactly();
-
-            A.CallTo(() => _jwtHandlerStub.CreateToken(user)).MustHaveHappenedOnceExactly();
+            A.CallTo(() => _jwtHandlerStub.CreateToken(A<User>.That.Matches(us => CheckObjectEquality(us, user)))).MustHaveHappenedOnceExactly();
 
 
         }
@@ -354,11 +353,12 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             A.CallTo(() => _userRepositoryStub.GetUserByNameAsync("aName")).Returns((User)null);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedException = new NotFoundException("No user Exists With This Name.");
 
             // Act
@@ -386,6 +386,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = (new TestUserData()).GetUser(2);
@@ -393,7 +394,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetUserByNameAsync(userName)).Returns(testUserData);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedUser = _mapperStub.Map<UserDetailsDto>(testUserData);
 
             // Act
@@ -423,11 +424,12 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             A.CallTo(() => _userRepositoryStub.GetUserByEmailAsync("aName")).Returns((User)null);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedException = new NotFoundException("No user Exists With This Email.");
 
             // Act
@@ -455,6 +457,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = (new TestUserData()).GetUser(2);
@@ -462,7 +465,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetUserByEmailAsync(Email)).Returns(testUserData);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedUser = _mapperStub.Map<UserDetailsDto>(testUserData);
 
             // Act
@@ -492,11 +495,12 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             A.CallTo(() => _userRepositoryStub.GetUserByUserNameAsync("aName")).Returns((User)null);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedException = new NotFoundException("No user Exists With This UserName.");
 
             // Act
@@ -524,6 +528,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
             var _userRepositoryStub = A.Fake<IUserRepository>();
             var _passwordHandlerStub = A.Fake<IPasswordHandler>();
             var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
             var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
 
             var testUserData = (new TestUserData()).GetUser(2);
@@ -531,7 +536,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
             A.CallTo(() => _userRepositoryStub.GetUserByUserNameAsync(userName)).Returns(testUserData);
 
-            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _userUpdateDtoValidatorStub);
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
             var expectedUser = _mapperStub.Map<UserDetailsDto>(testUserData);
 
             // Act

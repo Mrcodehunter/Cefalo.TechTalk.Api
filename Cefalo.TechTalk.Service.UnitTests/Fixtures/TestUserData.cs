@@ -11,12 +11,15 @@ namespace Cefalo.TechTalk.Service.UnitTests.Fixtures
     public class TestUserData
     {
         private readonly List<User> users = new List<User>();
-
+        private readonly DateTime _dateTime;
         public TestUserData()
         {
+            _dateTime = DateTime.UtcNow;
             for(int i = 0; i < 10; i++)
                 users.Add(CreateDummyUser(i));
         }
+
+        public virtual DateTime GetDateTime() { return _dateTime; }
 
         public virtual List<User> GetAllUsers() { return users; }
 
@@ -29,7 +32,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Fixtures
 
                 UserName = "asd",
 
-                Password = "1234abcd",
+                Password = null,
 
                 Email = "abcd@gmail.com",
 
@@ -43,7 +46,7 @@ namespace Cefalo.TechTalk.Service.UnitTests.Fixtures
         {
             UserDetailsDto userDetailsDto = new UserDetailsDto()
             {
-               Id = users[id].Id,
+                Id = users[id].Id,
 
                 Name = users[id].Name,
 
@@ -75,16 +78,43 @@ namespace Cefalo.TechTalk.Service.UnitTests.Fixtures
 
                 Email = "abcd@gmail.com",
 
-                CreatedAt = DateTime.UtcNow,
+                CreatedAt = _dateTime,
 
-                ModifiedAt = DateTime.UtcNow,
+                ModifiedAt = _dateTime,
 
-                PasswordChangedAt = DateTime.UtcNow
+                PasswordChangedAt = _dateTime
             };
 
             return user;
         }
 
-        
+        public User UpdateableUser(int id)
+        {
+            User user = new User()
+            {
+
+                Id = id,
+
+                Name = "asdad",
+
+                UserName = "asd",
+
+                PasswordHash = null,
+
+                PasswordSalt = null,
+
+                Email = "abcd@gmail.com",
+
+                CreatedAt = null,
+
+                ModifiedAt = _dateTime,
+
+                PasswordChangedAt = null
+            };
+
+            return user;
+        }
+
+
     }
 }

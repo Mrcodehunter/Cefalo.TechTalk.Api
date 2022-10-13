@@ -24,6 +24,7 @@ namespace Cefalo.TechTalk.Service.Services
         private readonly IMapper _mapper;
         private readonly IPasswordHandler _passwordHandler;
         private readonly IJwtHandler _jwtHandler;
+        private readonly IDateTimeHandler _dateTimeHandler;
         private readonly BaseValidator<UserUpdateDto> _userUpdateDtoValidator;
 
 
@@ -32,6 +33,7 @@ namespace Cefalo.TechTalk.Service.Services
             IMapper mapper,
             IPasswordHandler passwordHandler,
             IJwtHandler jwtHandler,
+            IDateTimeHandler dateTimeHandler,
             BaseValidator<UserUpdateDto> userUpdateDtoValidator
             )
         {
@@ -39,6 +41,7 @@ namespace Cefalo.TechTalk.Service.Services
             _mapper = mapper;
             _passwordHandler = passwordHandler;
             _jwtHandler = jwtHandler;
+            _dateTimeHandler = dateTimeHandler;
             _userUpdateDtoValidator = userUpdateDtoValidator;
         }
 
@@ -79,14 +82,17 @@ namespace Cefalo.TechTalk.Service.Services
                 _passwordHandler.CreatePasswordHash(user.Password, out byte[] passwordHash, out byte[] passwordSalt);
                 user2.PasswordSalt = passwordSalt;
                 user2.PasswordHash = passwordHash;
-                user2.PasswordChangedAt = DateTime.UtcNow;
+                user2.PasswordChangedAt = _dateTimeHandler.GetDateTimeInUtcNow();
                 
             }
-            user2.ModifiedAt = DateTime.UtcNow;
+            user2.Id = id;
+
+            user2.ModifiedAt = _dateTimeHandler.GetDateTimeInUtcNow();
 
             User updatedUser = await _userRepository.UpdateUserByIdAsync(user2,id);
            
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(updatedUser);
+
             userDetailsDto.Token = _jwtHandler.CreateToken(updatedUser);
 
             return userDetailsDto;
