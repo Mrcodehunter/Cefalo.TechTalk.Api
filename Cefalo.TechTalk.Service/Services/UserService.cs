@@ -79,9 +79,11 @@ namespace Cefalo.TechTalk.Service.Services
             User user2 = _mapper.Map<User>(user);
 
             if (user.Password != null) {
-                _passwordHandler.CreatePasswordHash(user.Password, out byte[] passwordHash, out byte[] passwordSalt);
-                user2.PasswordSalt = passwordSalt;
-                user2.PasswordHash = passwordHash;
+                var password = _passwordHandler.CreatePasswordHash(user.Password);
+                
+                user2.PasswordHash = password.Item1;
+                user2.PasswordSalt = password.Item2;
+                
                 user2.PasswordChangedAt = _dateTimeHandler.GetDateTimeInUtcNow();
                 
             }

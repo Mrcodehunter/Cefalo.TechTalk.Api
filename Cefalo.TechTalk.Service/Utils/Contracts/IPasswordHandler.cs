@@ -8,7 +8,7 @@ namespace Cefalo.TechTalk.Service.Utils.Contracts
 {
     public interface IPasswordHandler
     {
-        void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt);
+        Tuple<byte[], byte[]> CreatePasswordHash(string password);
         bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt);
     }
 }
