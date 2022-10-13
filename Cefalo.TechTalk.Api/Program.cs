@@ -91,6 +91,7 @@ builder.Services.AddScoped<IPasswordHandler, PasswordHandler>();
 builder.Services.AddScoped<IJwtHandler, JwtHandler>();
 builder.Services.AddScoped<ICookieHandler, CookieHandler>();
 builder.Services.AddScoped<ILoggerManager, LoggerManager>();
+builder.Services.AddScoped<IDateTimeHandler, DateTimeHandler>();
 
 
 

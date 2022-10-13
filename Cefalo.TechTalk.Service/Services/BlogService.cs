@@ -29,6 +29,8 @@ namespace Cefalo.TechTalk.Service.Services
         private readonly IJwtHandler _jwtHandler;
         private readonly IUriService _uriService;
         private readonly IHttpContextAccessor _httpContextAccessor;
+        private readonly IDateTimeHandler _dateTimeHandler;
+
         private readonly BaseValidator<BlogDetailsDto> _blogDetailsDtoValidator;
         private readonly BaseValidator<BlogPostDto> _blogPostDtoValidator;
         private readonly BaseValidator<BlogUpdateDto> _blogUpdateDtoValidator;
@@ -39,6 +41,7 @@ namespace Cefalo.TechTalk.Service.Services
             IJwtHandler jwtHandler,
             IUriService uriService,
             IHttpContextAccessor httpContextAccessor,
+            IDateTimeHandler dateTimeHandler,
             BaseValidator<BlogDetailsDto> blogDetailsDtoValidator,
             BaseValidator<BlogPostDto> blogPostDtoValidator,
             BaseValidator<BlogUpdateDto> blogUpdateDtoValidator
@@ -49,6 +52,7 @@ namespace Cefalo.TechTalk.Service.Services
             _jwtHandler = jwtHandler;
             _uriService = uriService;
             _httpContextAccessor = httpContextAccessor;
+            _dateTimeHandler = dateTimeHandler;
             _blogDetailsDtoValidator = blogDetailsDtoValidator;
             _blogUpdateDtoValidator = blogUpdateDtoValidator;
             _blogPostDtoValidator = blogPostDtoValidator;
@@ -56,15 +60,21 @@ namespace Cefalo.TechTalk.Service.Services
 
         public async Task<BlogDetailsDto> CreateBlogAsync(BlogPostDto blog)
         {
+
+            if (!_jwtHandler.HttpContextExist()) throw new UnAuthorizedException("Not Authorized");
+
             _blogPostDtoValidator.ValidateDto(blog);
 
             Blog blog1 = _mapper.Map<Blog>(blog);
+
             blog1.AuthorName = _jwtHandler.GetClaimName();
             blog1.AuthorId = Convert.ToInt32(_jwtHandler.GetClaimId());
-            blog1.CreatedAt = DateTime.UtcNow.AddMinutes(-1) ;
-            blog1.ModifiedAt = DateTime.UtcNow.AddMinutes(-1);
-           
+
+            blog1.CreatedAt = _dateTimeHandler.GetDateTimeInUtcNow();
+            blog1.ModifiedAt = _dateTimeHandler.GetDateTimeInUtcNow();
+
             Blog blog2 = await _blogRepository.CreateBlogAsync(blog1);
+
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog2);
 
             
@@ -73,20 +83,24 @@ namespace Cefalo.TechTalk.Service.Services
         public async Task<PagedResponse<List<BlogDetailsDto>>> GetAllAsync(PaginationFilter filter)
         {
             var route = _httpContextAccessor.HttpContext.Request.Path.Value;
+
             var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
 
             List<Blog> blogs = await _blogRepository.GetAllAsync(validFilter.PageNumber, validFilter.PageSize);
-            if (blogs == null) throw new NotFoundException("No Story Found!");
+            
             List<BlogDetailsDto> blogDetails = _mapper.Map<List<BlogDetailsDto>>(blogs);
+
             var totalRecords = await _blogRepository.CountAsync();
 
             var pagedReponse = PaginationHandler.CreatePagedReponse<BlogDetailsDto>(blogDetails, validFilter, totalRecords, _uriService, route);
+
             return pagedReponse;
         }
         public async Task<BlogDetailsDto> GetBlogByIdAsync(int id)
         {
             Blog blog = await _blogRepository.GetBlogByIdAsync(id);
-            if (blog == null) throw new NotFoundException("No Story Found!");
+
+            if (blog == null) throw new NotFoundException("No Story Found With This Id.");
 
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog);
             
@@ -96,25 +110,27 @@ namespace Cefalo.TechTalk.Service.Services
         public async Task<BlogDetailsDto> GetBlogByTitleAsync(string title)
         {
             var blog = await _blogRepository.GetBlogByTitleAsync(title);
-            if (blog == null) throw new NotFoundException("No Story Found!");
+
+            if (blog == null) throw new NotFoundException("No Story Found With This Title.");
 
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(blog);
-            _blogDetailsDtoValidator.ValidateDto(blogDetails);
 
             return blogDetails;
         }
         public async Task<PagedResponse<List<BlogDetailsDto>>> GetBlogsOfAuthorAsync(string username, PaginationFilter filter)
         {
             var route = _httpContextAccessor.HttpContext.Request.Path.Value;
+
             var validFilter = new PaginationFilter(filter.PageNumber, filter.PageSize);
 
             List<Blog> blogs = await _blogRepository.GetBlogsOfAuthorAsync(username,  validFilter.PageNumber, validFilter.PageSize);
-            
-            if (blogs == null) throw new NotFoundException("No Story Found!");
+
             List<BlogDetailsDto> blogDetails = _mapper.Map<List<BlogDetailsDto>>(blogs);
+
             var totalRecords = await _blogRepository.CountBlogsOfUserAsync(username);
 
             var pagedReponse = PaginationHandler.CreatePagedReponse<BlogDetailsDto>(blogDetails, validFilter, totalRecords, _uriService, route);
+
             return pagedReponse;
 
         }
@@ -125,14 +141,17 @@ namespace Cefalo.TechTalk.Service.Services
 
 
             if (!_jwtHandler.HttpContextExist()) throw new UnAuthorizedException("Not Authorized");
+
             Blog blog1 = await _blogRepository.GetBlogByIdAsync(id);
-            if (blog1 == null) throw new NotFoundException("No Story Found With such id!");
+
+            if (blog1 == null) throw new NotFoundException("No Story Found With this id!");
 
             if (blog1.AuthorId.ToString() != _jwtHandler.GetClaimId()) throw new UnAuthorizedException("Not Authorized");
 
             _blogUpdateDtoValidator.ValidateDto(blog);
 
             Blog blog2 = _mapper.Map<Blog>(blog);
+
             Blog updatedBlog = await _blogRepository.UpdateBlogByIdAsync(blog2, id);
 
             BlogDetailsDto blogDetails = _mapper.Map<BlogDetailsDto>(updatedBlog);
@@ -143,10 +162,15 @@ namespace Cefalo.TechTalk.Service.Services
         public async Task<Boolean> DeleteBlogByIdAsync(int id)
         {
             if (!_jwtHandler.HttpContextExist()) throw new UnAuthorizedException("Not Authorized");
+
             Blog blog = await _blogRepository.GetBlogByIdAsync(id);
+
             if (blog == null) throw new NotFoundException("No Story Found With such id!");
+
             if (blog.AuthorId.ToString() != _jwtHandler.GetClaimId()) throw new UnAuthorizedException("Not Authorized");
+
             await _blogRepository.DeleteBlogAsync(blog);
+
             return true;
             
         }
