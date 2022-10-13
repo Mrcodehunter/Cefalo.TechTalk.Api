@@ -19,6 +19,11 @@ namespace Cefalo.TechTalk.Service.UnitTests.Fixtures
                 users.Add(CreateDummyUser(i));
         }
 
+        public virtual Tuple<byte[], byte[]> GetAByteTuple()
+        {
+            return new Tuple<byte[], byte[]>(null, null);
+        }
+
         public virtual DateTime GetDateTime() { return _dateTime; }
 
         public virtual List<User> GetAllUsers() { return users; }

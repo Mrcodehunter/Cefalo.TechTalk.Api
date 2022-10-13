@@ -337,6 +337,86 @@ namespace Cefalo.TechTalk.Service.UnitTests.Systems
 
         }
 
+        [Theory]
+        [InlineData(1)]
+        [InlineData(2)]
+        public async void UpdateUSerByIdAsync_WithValidPasswordProperty_ReturnsUpdatedUserDetailsDto(int id)
+        {
+            //Arrange
+            var config = new MapperConfiguration(cfg =>
+            {
+                cfg.CreateMap<User, UserDetailsDto>();
+                cfg.CreateMap<UserUpdateDto, User>();
+            }
+            );
+            var _mapperStub = new Mapper(config);
+
+            var _userRepositoryStub = A.Fake<IUserRepository>();
+            var _passwordHandlerStub = A.Fake<IPasswordHandler>();
+            var _jwtHandlerStub = A.Fake<IJwtHandler>();
+            var _dateTimeHandlerStub = A.Fake<IDateTimeHandler>();
+            var _userUpdateDtoValidatorStub = A.Fake<BaseValidator<UserUpdateDto>>();
+
+            var testUserDataObject = new TestUserData();
+
+            var userUpdateDto = testUserDataObject.GetUserUpdateDto();
+            userUpdateDto.Password = "A-Password";
+
+            User user = testUserDataObject.GetUser(id);
+           
+
+            User updateableDto = testUserDataObject.UpdateableUser(id);
+            updateableDto.PasswordHash = null;
+            updateableDto.PasswordSalt = null;
+            updateableDto.PasswordChangedAt = testUserDataObject.GetDateTime();
+
+            A.CallTo(() => _jwtHandlerStub.HttpContextExist()).Returns(true);
+
+            A.CallTo(() => _jwtHandlerStub.GetClaimId()).Returns((id).ToString());
+
+            A.CallTo(() => _passwordHandlerStub.CreatePasswordHash(userUpdateDto.Password)).Returns(testUserDataObject.GetAByteTuple());
+
+            A.CallTo(() => _dateTimeHandlerStub.GetDateTimeInUtcNow()).Returns(testUserDataObject.GetDateTime());
+
+            A.CallTo(() => _userRepositoryStub
+                           .UpdateUserByIdAsync(A<User>.That.Matches(us => CheckObjectEquality(us, updateableDto)), id)).Returns(user);
+
+            A.CallTo(() => _jwtHandlerStub
+                           .CreateToken(A<User>.That.Matches(us => CheckObjectEquality(us, user)))).Returns("A-New-Token");
+
+            var _userService = new UserService(_userRepositoryStub, _mapperStub, _passwordHandlerStub, _jwtHandlerStub, _dateTimeHandlerStub, _userUpdateDtoValidatorStub);
+
+            var expectedUpdatedUser = testUserDataObject.CreateUserDetailsDtoObject(id);
+            expectedUpdatedUser.Token = "A-New-Token";
+
+
+            //Act
+
+            var actualUpdatedUser = await _userService.UpdateUserByIdAsync(userUpdateDto, id);
+
+            //Assert
+
+            Assert.NotNull(actualUpdatedUser);
+            Assert.IsType<UserDetailsDto>(actualUpdatedUser);
+            actualUpdatedUser.Should().BeEquivalentTo(expectedUpdatedUser);
+
+            A.CallTo(() => _jwtHandlerStub.HttpContextExist()).MustHaveHappenedOnceExactly();
+
+            A.CallTo(() => _jwtHandlerStub.GetClaimId()).MustHaveHappenedOnceExactly();
+
+            A.CallTo(() => _passwordHandlerStub.CreatePasswordHash(userUpdateDto.Password)).MustHaveHappenedOnceExactly();
+
+            A.CallTo(() => _dateTimeHandlerStub.GetDateTimeInUtcNow()).MustHaveHappenedTwiceExactly();
+
+            A.CallTo(() => _userRepositoryStub.UpdateUserByIdAsync(A<User>.That.Matches(us => CheckObjectEquality(us, updateableDto)), id)).MustHaveHappenedOnceExactly();
+
+            A.CallTo(() => _jwtHandlerStub.CreateToken(A<User>.That.Matches(us => CheckObjectEquality(us, user)))).MustHaveHappenedOnceExactly();
+
+
+        }
+
+
+
 
 
         //public async Task<UserDetailsDto> GetUserByNameAsync(string name);

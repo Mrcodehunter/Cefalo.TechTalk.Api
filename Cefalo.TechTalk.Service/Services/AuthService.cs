@@ -125,6 +125,8 @@ namespace Cefalo.TechTalk.Service.Services
 
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(user);
 
+            userDetailsDto.Token = Token;
+
             return userDetailsDto;
         }
 
