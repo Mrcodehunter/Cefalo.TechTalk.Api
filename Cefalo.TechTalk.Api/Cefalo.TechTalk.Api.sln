@@ -11,7 +11,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cefalo.TechTalk.Service", "
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cefalo.TechTalk.Repository", "..\Cefalo.TechTalk.Repository\Cefalo.TechTalk.Repository.csproj", "{16F56C21-CCFF-4D0A-96C6-2107F265B549}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cefalo.TechTalk.Service.UnitTests", "..\Cefalo.TechTalk.Service.UnitTests\Cefalo.TechTalk.Service.UnitTests.csproj", "{49E5F411-C2B3-42F8-8372-41C2A951891C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Cefalo.TechTalk.Service.UnitTests", "..\Cefalo.TechTalk.Service.UnitTests\Cefalo.TechTalk.Service.UnitTests.csproj", "{49E5F411-C2B3-42F8-8372-41C2A951891C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cefalo.TechTalk.Repository.UnitTests", "..\Cefalo.TechTalk.Repository.UnitTests\Cefalo.TechTalk.Repository.UnitTests.csproj", "{682BAE5D-26E8-411A-94B5-1903B8C6CCC5}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cefalo.TechTalk.Api.UnitTests", "..\Cefalo.TechTalk.Api.UnitTests\Cefalo.TechTalk.Api.UnitTests.csproj", "{DE37A6CC-609F-43FA-BCFA-0B295619DD5F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -39,6 +43,14 @@ Global
 		{49E5F411-C2B3-42F8-8372-41C2A951891C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{49E5F411-C2B3-42F8-8372-41C2A951891C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49E5F411-C2B3-42F8-8372-41C2A951891C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{682BAE5D-26E8-411A-94B5-1903B8C6CCC5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{682BAE5D-26E8-411A-94B5-1903B8C6CCC5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{682BAE5D-26E8-411A-94B5-1903B8C6CCC5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{682BAE5D-26E8-411A-94B5-1903B8C6CCC5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DE37A6CC-609F-43FA-BCFA-0B295619DD5F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DE37A6CC-609F-43FA-BCFA-0B295619DD5F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DE37A6CC-609F-43FA-BCFA-0B295619DD5F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DE37A6CC-609F-43FA-BCFA-0B295619DD5F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

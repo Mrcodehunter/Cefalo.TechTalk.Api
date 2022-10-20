@@ -18,28 +18,31 @@ namespace Cefalo.TechTalk.Api.Controllers
             _userService = userService;
         }
         [HttpGet]
-        public async Task<ActionResult<UserDetailsDto>> GetAllAsync()
+        public async Task<ActionResult> GetAllAsync()
         {
-            return Ok(await _userService.GetAllAsync());
+            var users = await _userService.GetAllAsync();
+            return Ok(users);
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<UserDetailsDto>> GetUserByIdAsync(int id)
+        public async Task<ActionResult> GetUserByIdAsync(int id)
         {
-            return Ok(await _userService.GetUserByIdAsync(id));
+            var user = await _userService.GetUserByIdAsync(id);
+            return Ok(user);
         }
 
         [HttpPut("{id}"), Authorize]
-        public async Task<ActionResult<UserDetailsDto>> UpdateUserAsync(UserUpdateDto userUpdateDto, int id)
+        public async Task<ActionResult> UpdateUserAsync(UserUpdateDto userUpdateDto, int id)
         {
             var user = await _userService.UpdateUserByIdAsync(userUpdateDto, id);
             return Ok(user); 
         }
 
         [HttpGet("username/{userName}")]
-        public async Task<ActionResult<UserDetailsDto>> GetUserByUserNameAsync(string userName)
+        public async Task<ActionResult> GetUserByUserNameAsync(string userName)
         {
-            return Ok(await _userService.GetUserByUserNameAsync(userName));
+            var user = await _userService.GetUserByUserNameAsync(userName);
+            return Ok(user);
         }
 
 
