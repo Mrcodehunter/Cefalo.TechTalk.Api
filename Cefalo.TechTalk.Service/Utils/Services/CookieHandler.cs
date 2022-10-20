@@ -20,11 +20,11 @@ namespace Cefalo.TechTalk.Service.Utils.Services
             _httpContextAccessor = httpContextAccessor;
         }
        
-        public string Get(string key)
+        public virtual string Get(string key)
         {
             return _httpContextAccessor.HttpContext.Request.Cookies["key"];
         }
-        public void Set(string key, string value/*, int? expireTime*/)
+        public virtual void Set(string key, string value/*, int? expireTime*/)
         {
             /*CookieOptions option = new CookieOptions();
             if (expireTime.HasValue)
@@ -33,7 +33,7 @@ namespace Cefalo.TechTalk.Service.Utils.Services
                 option.Expires = DateTime.Now.AddMilliseconds(10);*/
             _httpContextAccessor.HttpContext.Response.Cookies.Append(key, $"bearer {value}"/*, option*/);
         }
-        public void Remove(string key)
+        public virtual void Remove(string key)
         {
             _httpContextAccessor.HttpContext.Response.Cookies.Delete(key);
         }

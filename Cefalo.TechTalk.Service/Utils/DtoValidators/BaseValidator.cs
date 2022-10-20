@@ -14,7 +14,7 @@ namespace Cefalo.TechTalk.Service.Utils.DtoValidators
 
     public class BaseValidator<T> : AbstractValidator<T>
     {
-        public void ValidateDto(T dto)
+        public virtual void ValidateDto(T dto)
         {
             var result = this.Validate(dto);
             string err = "";

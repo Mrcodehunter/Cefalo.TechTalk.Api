@@ -24,7 +24,7 @@ namespace Cefalo.TechTalk.Service.Services
         private readonly IMapper _mapper;
         private readonly IPasswordHandler _passwordHandler;
         private readonly IJwtHandler _jwtHandler;
-        private readonly BaseValidator<UserDetailsDto> _userDetailsDtoValidator;
+        private readonly IDateTimeHandler _dateTimeHandler;
         private readonly BaseValidator<UserUpdateDto> _userUpdateDtoValidator;
 
 
@@ -33,7 +33,7 @@ namespace Cefalo.TechTalk.Service.Services
             IMapper mapper,
             IPasswordHandler passwordHandler,
             IJwtHandler jwtHandler,
-            BaseValidator<UserDetailsDto> userDetailsDtoValidator,
+            IDateTimeHandler dateTimeHandler,
             BaseValidator<UserUpdateDto> userUpdateDtoValidator
             )
         {
@@ -41,7 +41,7 @@ namespace Cefalo.TechTalk.Service.Services
             _mapper = mapper;
             _passwordHandler = passwordHandler;
             _jwtHandler = jwtHandler;
-            _userDetailsDtoValidator = userDetailsDtoValidator;
+            _dateTimeHandler = dateTimeHandler;
             _userUpdateDtoValidator = userUpdateDtoValidator;
         }
 
@@ -49,25 +49,24 @@ namespace Cefalo.TechTalk.Service.Services
         public async Task<List<UserDetailsDto>> GetAllAsync()
         {
             List<User> users = await _userRepository.GetAllAsync();
-            if (users == null) throw new NotFoundException("No User Found!");
 
             List<UserDetailsDto> userDetails = _mapper.Map<List<UserDetailsDto>>(users);
-            foreach(var user in userDetails) _userDetailsDtoValidator.ValidateDto(user);
 
             return userDetails;
         }
 
         public async Task<UserDetailsDto> GetUserByIdAsync(int id)
         {
-            User user = await (_userRepository.GetUserByIdAsync(id));
-            if (user == null) throw new NotFoundException("No user Exists!");
+            User user = await _userRepository.GetUserByIdAsync(id);
+
+            if (user == null) throw new NotFoundException("No user Exists With This Id.");
 
             UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
-            _userDetailsDtoValidator.ValidateDto(userDetails);
 
             return userDetails;
            
         }
+
 
         public async Task<UserDetailsDto> UpdateUserByIdAsync(UserUpdateDto user, int id)
         {
@@ -80,20 +79,23 @@ namespace Cefalo.TechTalk.Service.Services
             User user2 = _mapper.Map<User>(user);
 
             if (user.Password != null) {
-                _passwordHandler.CreatePasswordHash(user.Password, out byte[] passwordHash, out byte[] passwordSalt);
-                user2.PasswordSalt = passwordSalt;
-                user2.PasswordHash = passwordHash;
-                user2.PasswordChangedAt = DateTime.UtcNow;
+                var password = _passwordHandler.CreatePasswordHash(user.Password);
+                
+                user2.PasswordHash = password.Item1;
+                user2.PasswordSalt = password.Item2;
+                
+                user2.PasswordChangedAt = _dateTimeHandler.GetDateTimeInUtcNow();
                 
             }
-            user2.ModifiedAt = DateTime.UtcNow;
+            user2.Id = id;
+
+            user2.ModifiedAt = _dateTimeHandler.GetDateTimeInUtcNow();
 
             User updatedUser = await _userRepository.UpdateUserByIdAsync(user2,id);
            
             UserDetailsDto userDetailsDto = _mapper.Map<UserDetailsDto>(updatedUser);
-            userDetailsDto.Token = _jwtHandler.CreateToken(updatedUser);
 
-            _userDetailsDtoValidator.ValidateDto(userDetailsDto);
+            userDetailsDto.Token = _jwtHandler.CreateToken(updatedUser);
 
             return userDetailsDto;
          }
@@ -103,22 +105,30 @@ namespace Cefalo.TechTalk.Service.Services
         public async Task<UserDetailsDto> GetUserByNameAsync(string name)
         {
             User user = await (_userRepository.GetUserByNameAsync(name));
+            if(user == null) throw new NotFoundException("No user Exists With This Name.");
+
             UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
-            _userDetailsDtoValidator.ValidateDto(userDetails);
+
             return userDetails;
         }
         public async Task<UserDetailsDto> GetUserByEmailAsync(string email)
         {
-           User user = await (_userRepository.GetUserByEmailAsync(email));
-            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
-            _userDetailsDtoValidator.ValidateDto(userDetails);
-            return userDetails;
+            User user = await (_userRepository.GetUserByEmailAsync(email));
+
+           if (user == null) throw new NotFoundException("No user Exists With This Email.");
+
+           UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
+
+           return userDetails;
         }
         public async Task<UserDetailsDto> GetUserByUserNameAsync(string userName)
         {
-           User user = await (_userRepository.GetUserByUserNameAsync(userName));
-            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user);
-            _userDetailsDtoValidator.ValidateDto(userDetails);
+            User user = await (_userRepository.GetUserByUserNameAsync(userName));
+
+            if (user == null) throw new NotFoundException("No user Exists With This UserName.");
+
+            UserDetailsDto userDetails = _mapper.Map<UserDetailsDto>(user); 
+           
             return userDetails;
         }
     }

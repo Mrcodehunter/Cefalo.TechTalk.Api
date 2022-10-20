@@ -13,20 +13,23 @@ namespace Cefalo.TechTalk.Service.Utils.Services
     public class PasswordHandler : IPasswordHandler
     {
       
-       public void CreatePasswordHash(string password, out byte[] passwordHash, out byte[] passwordSalt)
+       public Tuple<byte[], byte[]> CreatePasswordHash(string password)
         {
+            byte[] passwordHash, passwordSalt;
             using (var hmac = new HMACSHA512())
             {
                 passwordSalt = hmac.Key;
-                passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                passwordHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
             }
+
+            return new Tuple<byte[], byte[]>(passwordHash, passwordSalt);
         }
 
         public bool VerifyPasswordHash(string password, byte[] passwordHash, byte[] passwordSalt)
         {
             using (var hmac = new HMACSHA512(passwordSalt))
             {
-                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(password));
                 return computedHash.SequenceEqual(passwordHash);
             }
         }
