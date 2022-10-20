@@ -30,12 +30,14 @@ namespace Cefalo.TechTalk.Repository.Repositories
 
         public async Task<List<User>> GetAllAsync()
         {
-            return await _techTalkContext.Users.ToListAsync();
+            var users = await _techTalkContext.Users.ToListAsync();
+            return users;
         }
 
         public async Task<User> GetUserByIdAsync(int id)
         {
-            return await _techTalkContext.Users.FindAsync(id);
+            var user = await _techTalkContext.Users.FindAsync(id); 
+            return user;
         }
 
         public async Task<User> UpdateUserByIdAsync(User user, int id)
